@@ -1,0 +1,172 @@
+---
+title: "My Report"
+date: today
+author: Ting-Hsuan CHU
+format:
+ pdf:
+    include-in-header:
+      - text: |
+         \usepackage{setspace,relsize}
+         \usepackage{setspace}
+         \usepackage{relsize}
+    
+mainfont: "Microsoft JhengHei UI"
+toc: true
+
+---
+
+
+# Summary Staistic  
+
+```{r}
+#| output: asis
+library(extrafont)
+library(Hmisc)
+library(palmerpenguins)
+latex(describe(penguins_raw), file = "", caption.placement = "top")
+```
+
+
+
+# Table 1  
+
+```{r}
+#| warning: false
+library(table1)
+summary(penguins_raw)
+# help(table1)
+```
+
+# Missing Values
+
+```{r}
+#| output: asis
+library(Hmisc)
+library(DataExplorer)
+```
+
+```{r}
+plot_missing(penguins_raw)
+```
+
+# After deleting Missing Value
+```{r}
+clean_Penguins <- na.omit(penguins_raw)
+summary(clean_Penguins)
+clean_Penguins$Sex <- as.factor(clean_Penguins$Sex)
+clean_Penguins$Stage <- as.factor(clean_Penguins$Stage)
+str(clean_Penguins)
+table1(~ Species+`Culmen Length (mm)`+Island| Sex, data=clean_Penguins)
+```
+# Descriptive statistics
+```{r}
+barplot(table(clean_Penguins$Island), main = "Bar Plot", col = "skyblue", xlab = "Island", ylab = "Frequency")
+barplot(table(clean_Penguins$Sex), main = "Bar Plot", col = "orange", xlab = "Sex", ylab = "Frequency")
+barplot(table(clean_Penguins$Species),space =1, main = "Bar Plot", col = "lightpink", xlab = "Species", ylab = "Frequency")
+```
+
+
+```{r}
+hist(clean_Penguins$`Culmen Length (mm)`, main = "Histogram", xlab = "Culmen Length (mm)", col = "lightblue", border = "black")
+hist(clean_Penguins$`Culmen Depth (mm)`, main = "Histogram", xlab = "Culmen Depth (mm)", col = "lightblue", border = "black")
+hist(clean_Penguins$`Body Mass (g)`, main = "Histogram", xlab = "Body Mass (g)", col = "lightblue", border = "black")
+hist(clean_Penguins$`Flipper Length (mm)`, main = "Histogram", xlab = "Flipper Length (mm)", col = "lightblue", border = "black")
+```
+
+```{r}
+plot(clean_Penguins$Sex, clean_Penguins$`Body Mass (g)`, main = "Scatter Plot", xlab = "Sex", ylab = "Body Mass", col = "lightblue", pch = 19)
+#plot(clean_Penguins$`Culmen Length (mm)`, clean_Penguins$`Body Mass (g)`, main = "Scatter Plot", xlab = "Culmen Length (mm)", ylab = "Body Mass", col = "lightblue", pch = 19)
+#plot(clean_Penguins$`Culmen Depth (mm)`, clean_Penguins$`Body Mass (g)`, main = "Scatter Plot", xlab = "Culmen Depth (mm)", ylab = "Body Mass", col = "lightblue", pch = 19)
+#plot(clean_Penguins$`Flipper Length (mm)`, clean_Penguins$`Body Mass (g)`, main = "Scatter Plot", xlab = "Flipper Length (mm)", ylab = "Body Mass", col = "lightblue", pch = 19)
+library(ggplot2)
+data1 <- data.frame(
+  x = clean_Penguins$`Flipper Length (mm)`,
+  y = clean_Penguins$`Body Mass (g)`,
+  category = clean_Penguins$Sex
+)
+data2 <- data.frame(
+  x = clean_Penguins$`Culmen Depth (mm)`,
+  y = clean_Penguins$`Body Mass (g)`,
+  category = clean_Penguins$Sex
+)
+data3 <- data.frame(
+  x = clean_Penguins$`Culmen Length (mm)`,
+  y = clean_Penguins$`Body Mass (g)`,
+  category = clean_Penguins$Sex
+)
+ggplot(data1, aes(x = x, y = y, color = category)) +
+  geom_point() +
+  labs(title = "Scatter Plot by Category", x = "Flipper Length (mm)`", y = "Body Mass (g)") +
+  theme_minimal()
+ggplot(data2, aes(x = x, y = y, color = category)) +
+  geom_point() +
+  labs(title = "Scatter Plot by Category", x = "Culmen Depth (mm)`", y = "Body Mass (g)") +
+  theme_minimal()
+ggplot(data3, aes(x = x, y = y, color = category)) +
+  geom_point() +
+  labs(title = "Scatter Plot by Category", x = "Culmen Length (mm)`", y = "Body Mass (g)") +
+  theme_minimal()
+```
+
+```{r}
+colnames(clean_Penguins)
+clean_Penguins_numeric <- clean_Penguins[, c(10,11,12,13,15,16)]
+cor_matrix <- cor(clean_Penguins_numeric, use = "complete.obs")
+print(cor_matrix)
+#從correlation表格看出，Flipper Length和Body Mass有高度相關，
+#其次為Culmen Depth和Delta 15 N，Delta 15 N和Delta 13 N，這三個的相關性都有大於0.6以上
+```
+
+
+
+# Shapiro-Wilk normality test
+```{r}
+x1<- as.numeric(unlist(clean_Penguins_numeric[, 4]))
+y1 <- as.numeric(unlist(clean_Penguins_numeric[, 3]))
+shapiro_test1 <- shapiro.test(x1)
+shapiro_test2 <- shapiro.test(y1)
+print(shapiro_test1)
+print(shapiro_test2)
+```
+Shapiro-wilk normality test的虛無假設為來自常態分配，
+第一個test檢定Body Mass可以發現，
+在設定alpha=0.05下，
+其p-value=0.027<0.05,reject 虛無假設，
+意味著Body Mass不是來自常態分配，
+而從上面的histogram也可以看出其分配有右偏的情形。
+第二個test檢定Flipper Length (mm)可以發現，
+在設定alpha=0.05下，
+其p-value=0.27>0.05,do not reject 虛無假設，
+意味著Flipper Length來自常態分配，
+而從上面的histogram也可以看出其趨勢量集中在中間的情形。
+
+# Pearson's product-moment correlation
+```{r}
+# 計算相關係數並進行檢定
+cor_test_result <- cor.test(x1, y1)
+print(cor_test_result)
+
+```
+對照上面的correlaton plot，結果相同
+
+
+# Pearson's Chi-squared test
+```{r}
+table_data <- table(clean_Penguins$Sex, clean_Penguins$Island)
+chisq_result <- chisq.test(table_data)
+print(chisq_result)
+
+table_data <- table(clean_Penguins$Species, clean_Penguins$Island)
+chisq_result <- chisq.test(table_data)
+print(chisq_result)
+
+```
+
+Chi-squared test的虛無假設為兩變數獨立(不相關)，
+第一個test檢定Sex和Island可以發現，
+在設定alpha=0.05下，其p-value=0.9741 > 0.05,
+do not #reject虛無假設，意味著Sex和Island獨立，
+沒有太大的關聯
+第二個test檢定Species和Island可以發現，
+意味著Species和Island有關聯，符合直觀，
+地域性確實可能會影響一個物種種類的分布情形
